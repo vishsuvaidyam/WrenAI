@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "graphql-tag": "^2.12.6",
+    "react-is": "^19.1.1"
+  }
+}
