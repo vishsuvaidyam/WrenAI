@@ -43,7 +43,7 @@ const PromptStyle = styled.div`
   position: fixed;
   width: 680px;
   left: 50%;
-  margin-left: calc(-340px + 133px);
+  transform: translateX(-50%);
   bottom: 18px;
   z-index: 999;
   box-shadow:
