@@ -7,4 +7,4 @@ README.md
 .git
 *.sqlite
 *.sqlite3
-.env*.local
+# .env*.local
