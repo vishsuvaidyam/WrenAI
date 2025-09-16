@@ -142,11 +142,16 @@ services:
       MYSQL_USER: frappe
       MYSQL_PASSWORD: frappe
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
       - wren
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   bootstrap:
     image: ghcr.io/canner/wren-bootstrap:${WREN_BOOTSTRAP_VERSION}
@@ -257,7 +262,7 @@ services:
       EXPERIMENTAL_ENGINE_RUST_VERSION: ${EXPERIMENTAL_ENGINE_RUST_VERSION}
       WREN_PRODUCT_VERSION: ${WREN_PRODUCT_VERSION}
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - data:/app/data
     networks:

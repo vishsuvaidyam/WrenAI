@@ -83,7 +83,16 @@ export default function SiderLayout(props: Props) {
         closable={false}
         bodyStyle={{ padding: 0 }}
       >
-        <div style={{ background: 'inherit', padding: 8 }}>
+        <div
+          style={{
+            background: 'rgb(250, 250, 250)',
+            padding: 8,
+            position: 'sticky',
+            top: 0,
+            zIndex: 5,
+            borderBottom: '1px solid var(--adm-color-border,#eee)',
+          }}
+        >
           <Button
             block
             onClick={() => setDrawerOpen(false)}
