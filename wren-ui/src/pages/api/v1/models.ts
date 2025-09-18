@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { components } from '@/common';
 import { ApiType } from '@server/repositories/apiHistoryRepository';
-import * as Errors from '@/apollo/server/utils/error';
 import {
   ApiError,
   respondWithSimple,
@@ -31,12 +30,24 @@ export default async function handler(
 
     // Get current project's last deployment
     const lastDeploy = await deployService.getLastDeployment(project.id);
+
+    // If there is no deployment yet, return empty structures with 200
     if (!lastDeploy) {
-      throw new ApiError(
-        'No deployment found, please deploy your project first',
-        400,
-        Errors.GeneralErrorCodes.NO_DEPLOYMENT_FOUND,
-      );
+      await respondWithSimple({
+        res,
+        statusCode: 200,
+        responsePayload: {
+          hash: null,
+          models: [],
+          relationships: [],
+          views: [],
+        },
+        projectId: project.id,
+        apiType: ApiType.GET_MODELS,
+        startTime,
+        headers: req.headers as Record<string, string>,
+      });
+      return;
     }
 
     // Get the MDL from the deployment manifest

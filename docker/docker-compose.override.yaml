@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  ollama-wrapper:
+    build:
+      context: .
+      dockerfile: Dockerfile.wrapper
+    restart: on-failure
+    ports:
+      - "11436:8000"    
+    networks:
+      - wren
+    depends_on:
+      - wren-ai-service
+
+  wren-ai-service:
+    environment:
+      # Use key from docker/.env instead of a hardcoded dummy
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Comment out custom local model overrides by default
+      # OPENAI_MODEL: llama2:7b
+      # GENERATION_MODEL: custom
+      # WREN_AI_ENDPOINT: http://ollama-wrapper:11435/v1

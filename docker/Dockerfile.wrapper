@@ -1,0 +1,11 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY ollama_wrapper.py .
+
+RUN pip install fastapi uvicorn requests
+
+EXPOSE 11435
+
+CMD ["uvicorn", "ollama_wrapper:app", "--host", "0.0.0.0", "--port", "11435"]

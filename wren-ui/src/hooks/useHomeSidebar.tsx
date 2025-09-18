@@ -60,56 +60,46 @@ import {
   useThreadsQuery,
   useUpdateThreadMutation,
 } from '@/apollo/client/graphql/home.generated';
+import useUserId from '@/hooks/useUserId';
 
-type UseHomeSidebarProps = {
-  userId?: string;
-  apiBaseUrl?: string;
-};
-let uid = '';
-
-// Backward compatible signature: string userId OR props object
-export default function useHomeSidebar(arg?: string | UseHomeSidebarProps) {
-  const userId = typeof arg === 'string' ? arg : arg?.userId;
-  const apiBaseUrl =
-    (typeof arg === 'object' && arg?.apiBaseUrl) ||
-    'http://test.localhost:8000';
-
-  console.log('userId:', userId);
+export default function useHomeSidebar(externalUserId?: string) {
+  const { userId: internalUserId, isUserIdReady } = useUserId();
+  const userId = externalUserId || internalUserId;
   const router = useRouter();
   const [userThreads, setUserThreads] = useState<any[]>([]);
+
   const { data, refetch } = useThreadsQuery({
     fetchPolicy: 'cache-and-network',
   });
+
   const [updateThread] = useUpdateThreadMutation({
     onError: (error) => console.error(error),
   });
+
   const [deleteThread] = useDeleteThreadMutation({
     onError: (error) => console.error(error),
   });
 
   // Fetch threads from Frappe based on userId
   useEffect(() => {
-    uid = encodeURIComponent(userId);
-    if (!userId) return;
-    console.log('userId:', userId);
+    if (!isUserIdReady || !userId) return;
+
+    const uid = encodeURIComponent(userId);
+
     const fetchUserThreads = async () => {
       try {
         const response = await fetch(
-          `${apiBaseUrl}/api/method/my_test.wren_app.wren_ai.get_user_threads?user_id=${uid}`,
+          `http://wren.localhost:8000/api/method/frappe_theme.controllers.wren.get_user_threads?user_id=${uid}`,
           {
             method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
           },
         );
 
         if (response.ok) {
           const result = await response.json();
-          console.log('result:', result);
           setUserThreads(result.message || []);
         } else {
-          console.error('Failed to fetch user threads');
           setUserThreads([]);
         }
       } catch (error) {
@@ -119,46 +109,21 @@ export default function useHomeSidebar(arg?: string | UseHomeSidebarProps) {
     };
 
     fetchUserThreads();
-  }, [userId, apiBaseUrl]);
+  }, [userId, isUserIdReady]);
 
   const threads = useMemo(() => {
     const allThreads = data?.threads || [];
-    console.log('useHomeSidebar - allThreads:', allThreads);
-    console.log('useHomeSidebar - userId:', userId);
-    console.log('useHomeSidebar - userThreads:', userThreads);
 
-    // If no userId provided, return all threads (for backward compatibility)
-    if (!userId) {
-      console.log('useHomeSidebar - returning all threads (no userId)');
-      return allThreads.map((thread) => ({
-        id: thread.id.toString(),
-        name: thread.summary,
-      }));
-    }
+    if (!isUserIdReady || !userId) return [];
 
-    // If userId is provided but no userThreads yet, return empty array
-    // This prevents showing all threads before user-specific threads are loaded
-    if (userThreads.length === 0) {
-      console.log(
-        'useHomeSidebar - returning empty array (no userThreads yet)',
-      );
-      return [];
-    }
+    if (userThreads.length === 0) return [];
 
-    // Filter threads based on userThreads from Frappe
     const userThreadIds = userThreads.map((ut) => ut.thread_id);
-    console.log('useHomeSidebar - userThreadIds:', userThreadIds);
 
-    const filteredThreads = allThreads
-      .filter((thread) => userThreadIds.includes(thread.id.toString()))
-      .map((thread) => ({
-        id: thread.id.toString(),
-        name: thread.summary,
-      }));
-
-    console.log('useHomeSidebar - filteredThreads:', filteredThreads);
-    return filteredThreads;
-  }, [data, userId, userThreads]);
+    return allThreads
+      .filter((t) => userThreadIds.includes(t.id.toString()))
+      .map((t) => ({ id: t.id.toString(), name: t.summary }));
+  }, [data, userThreads, isUserIdReady, userId]);
 
   const onSelect = (selectKeys: string[]) => {
     router.push(`${Path.Home}/${selectKeys[0]}`);
