@@ -27,6 +27,11 @@ RUN yarn add sharp
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+# Build-time envs injected from docker-compose build.args
+ARG NEXT_PUBLIC_BASE_URL
+ARG REACT_APP_BASE_URL
+ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+ENV REACT_APP_BASE_URL=${REACT_APP_BASE_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY public ./public
 COPY src ./src
@@ -41,6 +46,11 @@ RUN yarn build
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
+# Make sure runtime also has these (can be overridden by docker-compose environment)
+ARG NEXT_PUBLIC_BASE_URL
+ARG REACT_APP_BASE_URL
+ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+ENV REACT_APP_BASE_URL=${REACT_APP_BASE_URL}
 
 COPY --from=builder /app/public ./public
 

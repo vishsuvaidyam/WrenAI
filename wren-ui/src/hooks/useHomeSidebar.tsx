@@ -61,6 +61,7 @@ import {
   useUpdateThreadMutation,
 } from '@/apollo/client/graphql/home.generated';
 import useUserId from '@/hooks/useUserId';
+import { useUser } from '@/hooks/userContext';
 
 export default function useHomeSidebar(externalUserId?: string) {
   const { userId: internalUserId, isUserIdReady } = useUserId();
@@ -80,36 +81,13 @@ export default function useHomeSidebar(externalUserId?: string) {
     onError: (error) => console.error(error),
   });
 
-  // Fetch threads from Frappe based on userId
+  // Prefer threads from global UserProvider if available
+  const { threads: globalThreads } = useUser();
   useEffect(() => {
-    if (!isUserIdReady || !userId) return;
-
-    const uid = encodeURIComponent(userId);
-
-    const fetchUserThreads = async () => {
-      try {
-        const response = await fetch(
-          `http://wren.localhost:8000/api/method/frappe_theme.controllers.wren.get_user_threads?user_id=${uid}`,
-          {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          },
-        );
-
-        if (response.ok) {
-          const result = await response.json();
-          setUserThreads(result.message || []);
-        } else {
-          setUserThreads([]);
-        }
-      } catch (error) {
-        console.error('Error fetching user threads:', error);
-        setUserThreads([]);
-      }
-    };
-
-    fetchUserThreads();
-  }, [userId, isUserIdReady]);
+    if (Array.isArray(globalThreads) && globalThreads.length > 0) {
+      setUserThreads(globalThreads as any[]);
+    }
+  }, [globalThreads]);
 
   const threads = useMemo(() => {
     const allThreads = data?.threads || [];

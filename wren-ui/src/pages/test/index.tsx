@@ -141,7 +141,11 @@ export default function Home() {
       const threadId = response.data.createThread.id;
 
       // Save thread_id to Frappe
-      const apiUrl = 'http://wren.localhost:8000';
+      const apiUrl = (process.env.NEXT_PUBLIC_BASE_URL ||
+        process.env.REACT_APP_BASE_URL ||
+        (typeof window !== 'undefined'
+          ? window.location.origin
+          : '')) as string;
       await fetch(
         `${apiUrl}/api/method/frappe_theme.controllers.wren.save_thread_id`,
         {
